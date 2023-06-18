@@ -225,7 +225,7 @@ not :: Bool -> Bool
 
 Boolean 'and' operator:
 >>> :t (&&)
-(&&) :: Bool -> Bool -> Boolß
+(&&) :: Bool -> Bool -> Bool
 
 Addition of two numbers:
 >>> :t (+)
@@ -492,7 +492,7 @@ Implement a function that returns the last digit of a given number.
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
 lastDigit :: Int -> Int
-lastDigit n = mod n 10
+lastDigit n = if n >= 0 then (mod n 10) else (mod ((-1) * n) 10)
 
 
 {- |
@@ -644,9 +644,15 @@ specifying complex expressions.
 
 sumLast2 :: Int -> Int
 sumLast2 n =
-  let a = div (mod n 100) 10
-      b = mod n 10
-  in a + b
+  if n >= 0
+    then
+      let a = div (mod n 100) 10
+          b = mod n 10
+      in a + b
+    else
+      let a = div (mod ((-1) * n) 100) 10
+          b = mod ((-1) * n) 10
+      in a + b
 
 
 {- |
@@ -669,7 +675,7 @@ aren't ready for this boss yet!
 
 firstDigit :: Int -> Int
 firstDigit n =
-  if div n 10 == 0 then n else firstDigit (div n 10)
+  if n < 0 then firstDigit ((-1) * n) else (if n == 0 || div n 10 == 0 then n else firstDigit (div n 10))
 
 
 {-
