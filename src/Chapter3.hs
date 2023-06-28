@@ -53,6 +53,8 @@ provide more top-level type signatures, especially when learning Haskell.
 
 module Chapter3 where
 
+import Data.Maybe (isJust)
+
 {-
 =🛡= Types in Haskell
 
@@ -344,6 +346,13 @@ of a book, but you are not limited only by the book properties we described.
 Create your own book type of your dreams!
 -}
 
+data Book = MkBook
+    { bookTitle       :: String
+    , bookAuthor      :: String
+    , bookPublishYear :: Int
+    } deriving (Show)
+
+
 {- |
 =⚔️= Task 2
 
@@ -375,6 +384,27 @@ after the fight. The battle has the following possible outcomes:
 ♫ NOTE: In this task, you need to implement only a single round of the fight.
 
 -}
+
+data Knight = MkKnight
+    { kname   :: String
+    , khealth :: Int
+    , kattack :: Int
+    , kgold   :: Int
+    }
+
+data Monster = MkMonster
+    { mname   :: String
+    , mhealth :: Int
+    , mattack :: Int
+    , mgold   :: Int
+    }
+
+fight :: Monster -> Knight -> Int
+fight m k
+  | (khealth k) <= 0 = -1
+  | (kattack k) > (mhealth m) = (kgold k) + (mgold m)
+  | (mattack m) > (khealth k) = -1
+  | otherwise = kgold k
 
 {- |
 =🛡= Sum types
@@ -462,6 +492,12 @@ Create a simple enumeration for the meal types (e.g. breakfast). The one who
 comes up with the most number of names wins the challenge. Use your creativity!
 -}
 
+data Meal
+  = Breakfast
+  | Lunch
+  | Dinner
+  | Supper
+
 {- |
 =⚔️= Task 4
 
@@ -481,6 +517,29 @@ After defining the city, implement the following functions:
    complicated task, walls can be built only if the city has a castle
    and at least 10 living __people__ inside in all houses of the city in total.
 -}
+
+data House = MkHouse { housePeople :: Int } deriving (Show, Eq)
+data Wall = Wall deriving (Show, Eq)
+data Castle = Castle String (Maybe Wall) deriving (Show, Eq)
+data Building = Church | Library deriving (Show, Eq)
+data City = City
+    { cityName :: String
+    , cityCastle :: Maybe Castle
+    , cityBuilding :: Maybe Building
+    , cityHouses :: [House]
+    } deriving (Show, Eq)
+
+buildCastle :: City -> String -> City
+buildCastle c name = c {cityCastle = Just (Castle name Nothing)}
+
+buildHouse :: City -> House -> City
+buildHouse c h = c {cityHouses = h : (cityHouses c)}
+
+buildWalls :: City -> City
+buildWalls c
+  | (isJust (cityCastle c)) && countPeople >= 10 = c {cityCastle = fmap (\(Castle name _) -> Castle name (Just Wall)) (cityCastle c)}
+  | otherwise = c
+  where countPeople = sum(map housePeople (cityHouses c))
 
 {-
 =🛡= Newtypes
@@ -562,22 +621,31 @@ introducing extra newtypes.
 🕯 HINT: if you complete this task properly, you don't need to change the
     implementation of the "hitPlayer" function at all!
 -}
+
+newtype Health = Health Int
+newtype Armor = Armor Int
+newtype Dexterity = Dexterity Int
+newtype Attack = Attack Int
+newtype Strength = Strength Int
+newtype Damage = Damage Int
+newtype Defense = Defense Int
+
 data Player = Player
-    { playerHealth    :: Int
-    , playerArmor     :: Int
-    , playerAttack    :: Int
-    , playerDexterity :: Int
-    , playerStrength  :: Int
+    { playerHealth    :: Health
+    , playerArmor     :: Armor
+    , playerAttack    :: Attack
+    , playerDexterity :: Dexterity
+    , playerStrength  :: Strength
     }
 
-calculatePlayerDamage :: Int -> Int -> Int
-calculatePlayerDamage attack strength = attack + strength
+calculatePlayerDamage :: Attack -> Strength -> Damage
+calculatePlayerDamage (Attack attack) (Strength strength) = (Damage (attack + strength))
 
-calculatePlayerDefense :: Int -> Int -> Int
-calculatePlayerDefense armor dexterity = armor * dexterity
+calculatePlayerDefense :: Armor -> Dexterity -> Defense
+calculatePlayerDefense (Armor armor) (Dexterity dexterity) = (Defense (armor * dexterity))
 
-calculatePlayerHit :: Int -> Int -> Int -> Int
-calculatePlayerHit damage defense health = health + defense - damage
+calculatePlayerHit :: Damage -> Defense -> Health -> Health
+calculatePlayerHit (Damage damage) (Defense defense) (Health health) = Health (health + defense - damage)
 
 -- The second player hits first player and the new first player is returned
 hitPlayer :: Player -> Player -> Player
