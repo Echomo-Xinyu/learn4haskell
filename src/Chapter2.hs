@@ -336,7 +336,9 @@ from it!
 ghci> :l src/Chapter2.hs
 -}
 subList :: Int -> Int -> [a] -> [a]
-subList a b list = drop a (take (b + 1) list) 
+subList a b list
+  | a < 0 || b < 0 = []
+  | otherwise = drop a (take (b + 1) list) 
 
 {- |
 =⚔️= Task 4
@@ -348,7 +350,7 @@ Implement a function that returns only the first half of a given list.
 >>> firstHalf "bca"
 "b"
 -}
--- PUT THE FUNCTION TYPE IN HERE
+firstHalf :: [a] -> [a]
 firstHalf l = take (div (length l) 2) l
 
 
@@ -625,7 +627,7 @@ Write a function that takes elements of a list only in even positions.
 -}
 takeEven :: [a] -> [a]
 takeEven [] = []
-takeEven (x : y : xs) = x : takeEven xs
+takeEven (x : _ : xs) = x : takeEven xs
 takeEven (x) = (x)
 
 {- |
