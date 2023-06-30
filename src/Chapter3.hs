@@ -823,6 +823,19 @@ parametrise data types in places where values can be of any general type.
   maybe-treasure ;)
 -}
 
+data TreasureChest x = TreasureChest
+  { treasureChestLoot :: Maybe x
+  } deriving (Show, Eq)
+
+data Dragon x = Dragon
+  { dragonPower :: x
+  } deriving (Show, Eq)
+
+data Lair t p = Lair
+  { lairDragon :: Dragon p
+  , lairTreasureChest :: TreasureChest t
+  } deriving (Show, Eq)
+
 {-
 =🛡= Typeclasses
 
