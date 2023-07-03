@@ -385,26 +385,26 @@ after the fight. The battle has the following possible outcomes:
 
 -}
 
-data Knight = MkKnight
-    { kname   :: String
-    , khealth :: Int
-    , kattack :: Int
-    , kgold   :: Int
-    }
+-- data Knight = MkKnight
+--     { kname   :: String
+--     , khealth :: Int
+--     , kattack :: Int
+--     , kgold   :: Int
+--     }
 
-data Monster = MkMonster
-    { mname   :: String
-    , mhealth :: Int
-    , mattack :: Int
-    , mgold   :: Int
-    }
+-- data Monster = MkMonster
+--     { mname   :: String
+--     , mhealth :: Int
+--     , mattack :: Int
+--     , mgold   :: Int
+--     }
 
-fight :: Monster -> Knight -> Int
-fight m k
-  | (khealth k) <= 0 = -1
-  | (kattack k) > (mhealth m) = (kgold k) + (mgold m)
-  | (mattack m) > (khealth k) = -1
-  | otherwise = kgold k
+-- fight :: Monster -> Knight -> Int
+-- fight m k
+--   | (khealth k) <= 0 = -1
+--   | (kattack k) > (mhealth m) = (kgold k) + (mgold m)
+--   | (mattack m) > (khealth k) = -1
+--   | otherwise = kgold k
 
 {- |
 =🛡= Sum types
@@ -993,6 +993,18 @@ Implement instances of "Append" for the following types:
 class Append a where
     append :: a -> a -> a
 
+newtype Gold = Gold Int
+instance Append Gold where
+    append (Gold a) (Gold b) = Gold (a + b)
+
+instance Append [a] where
+    append = (++)
+
+instance (Append a) => Append (Maybe a) where
+    append (Just a) (Just b) = Just (append a b)
+    append (Just a) _ = Just a
+    append _ (Just b) = Just b
+    append _ _ = Nothing
 
 {-
 =🛡= Standard Typeclasses and Deriving
@@ -1054,6 +1066,35 @@ implement the following functions:
 🕯 HINT: to implement this task, derive some standard typeclasses
 -}
 
+data DayOfWeek = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday deriving (Show, Eq, Enum)
+
+isWeekend :: DayOfWeek -> Bool
+isWeekend day
+  | day == Saturday || day == Sunday = True
+  | otherwise = False
+
+nextDay :: DayOfWeek -> DayOfWeek
+nextDay day
+  | day == Monday = Tuesday
+  | day == Tuesday = Wednesday
+  | day == Wednesday = Thursday
+  | day == Thursday = Friday
+  | day == Friday = Saturday
+  | day == Saturday = Sunday
+  | day == Sunday = Monday
+  | otherwise = Monday
+
+daysToParty :: DayOfWeek -> Int
+daysToParty day
+  | day == Monday = 4
+  | day == Tuesday = 3
+  | day == Wednesday = 2
+  | day == Thursday = 1
+  | day == Friday = 0
+  | day == Saturday = 6
+  | day == Sunday = 5
+  | otherwise = 7
+
 {-
 =💣= Task 9*
 
@@ -1088,6 +1129,62 @@ properties using typeclasses, but they are different data types in the end.
 Implement data types and typeclasses, describing such a battle between two
 contestants, and write a function that decides the outcome of a fight!
 -}
+
+data KnightAction = KnightAttack | DrinkPotion | CastSpell deriving (Show, Eq)
+
+data MonsterAction = MonsterAttack | RunAway deriving (Show, Eq)
+
+data Knight = Knight
+  { knightHp :: Int,
+    knightArm :: Int,
+    knightAtt :: Int,
+    knightStr :: Int,
+    knightActions :: [KnightAction]
+  }
+  deriving (Show, Eq)
+
+data Monster = Monster
+  { monsterHp :: Int,
+    monsterAtt :: Int,
+    monsterActions :: [MonsterAction]
+  }
+  deriving (Show, Eq)
+
+class (Show a, Eq a) => Fighter a where
+  getHealth :: a -> Int
+  getAttack :: a -> Int
+  takeAction :: a -> Maybe a
+  recieveDamage :: a -> Int -> a
+
+instance Fighter Knight where
+  getHealth = knightHp
+  getAttack = knightAtt
+  takeAction knight = case knightActions knight of
+    [] -> Nothing
+    (KnightAttack : rest) -> Just knight {knightActions = rest ++ [KnightAttack], knightAtt = knightAtt knight + 10}
+    (DrinkPotion : rest) -> Just knight {knightActions = rest ++ [DrinkPotion], knightHp = knightHp knight + 20}
+    (CastSpell : rest) -> Just knight {knightActions = rest ++ [CastSpell], knightArm = knightArm knight + 15}
+  recieveDamage knight damage = knight {knightHp = max 0 (knightHp knight - damage + knightArm knight)}
+
+instance Fighter Monster where
+  getHealth = monsterHp
+  getAttack = monsterAtt
+  takeAction monster = case monsterActions monster of
+    [] -> Nothing
+    (MonsterAttack : rest) -> Just monster {monsterActions = rest ++ [MonsterAttack], monsterAtt = monsterAtt monster + 5}
+    (RunAway : rest) -> Just monster {monsterActions = rest ++ [RunAway], monsterHp = if monsterHp monster <= 15 then 0 else monsterHp monster}
+  recieveDamage monster damage = monster {monsterHp = max 0 (monsterHp monster - damage)}
+
+battle :: (Fighter a) => a -> a -> Either a a
+battle attacker defender
+  | getHealth attacker <= 0 = Right defender
+  | getHealth defender <= 0 = Left attacker
+  | otherwise =
+      case takeAction attacker of
+        Nothing -> Right defender
+        Just updatedAttacker ->
+          let updatedDefender = recieveDamage defender (getAttack attacker)
+           in battle updatedDefender updatedAttacker
 
 
 {-
